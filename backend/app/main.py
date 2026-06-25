@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import create_indexes
 from app.routes import auth, resume, jobs, applications, analytics
+from app.routes import seed as seed_route
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +43,7 @@ app.include_router(resume.router)
 app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(analytics.router)
+app.include_router(seed_route.router)
 
 
 @app.get("/")
