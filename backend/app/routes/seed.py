@@ -9,8 +9,8 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Query
 
 from app.database import db
-from app.utils.security import get_password_hash
-from app.utils.matching_engine import compute_match
+from app.utils.security import hash_password as get_password_hash
+from app.utils.matching_engine import calculate_match_score
 
 router = APIRouter()
 
@@ -176,11 +176,15 @@ async def seed_database(secret: str = Query(...)):
         cand_oid, user_oid = candidate_ids[cand_idx]
         job_oid = job_ids[job_idx]
 
-        cand_profile = {"skills": c["skills"], "experience_years": float(c["exp"]),
-                        "education_level": c["edu_level"], "certifications": c["certs"]}
-        job_req = {"skillsRequired": j["skills"], "experienceRequired": j["exp"],
-                   "educationLevel": j.get("edu_level", 2), "certificationsRequired": j["certs"]}
-        match = compute_match(cand_profile, job_req)
+        cand_for_match = {"skills": c["skills"], "experience_years": float(c["exp"]),
+                          "education": [c["edu"]], "certifications": c["certs"]}
+        job_for_match = {
+            "skillsRequired": j["skills"],
+            "experienceRequired": j["exp"],
+            "educationRequired": j["edu"],
+            "certificationsRequired": j["certs"],
+        }
+        match = calculate_match_score(cand_for_match, job_for_match)
 
         await db.applications.insert_one({
             "_id": new_id(),
@@ -189,10 +193,10 @@ async def seed_database(secret: str = Query(...)):
             "candidateSkills": c["skills"], "candidateExperience": c["exp"],
             "jobId": str(job_oid), "jobTitle": j["title"],
             "jobDepartment": j["dept"], "jobLocation": j["loc"],
-            "matchScore": match["matchScore"], "matchRank": match["matchRank"],
-            "skillScore": match["skillScore"], "experienceScore": match["experienceScore"],
-            "educationScore": match["educationScore"], "certificationScore": match["certificationScore"],
-            "matchedSkills": match.get("matchedSkills", []),
+            "matchScore": match["match_score"], "matchRank": match["rank"],
+            "skillScore": match["skill_score"], "experienceScore": match["experience_score"],
+            "educationScore": match["education_score"], "certificationScore": match["certification_score"],
+            "matchedSkills": match.get("matched_skills", []),
             "status": status,
             "created_at": now_minus(days=random.randint(1,10), hours=random.randint(0,12)),
             "updated_at": datetime.utcnow(),
