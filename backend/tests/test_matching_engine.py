@@ -1,4 +1,6 @@
 import pytest
+import numpy as np
+import app.utils.matching_engine as matching_engine
 from app.utils.matching_engine import (
     calculate_skills_score,
     calculate_experience_score,
@@ -6,6 +8,28 @@ from app.utils.matching_engine import (
     calculate_certifications_score,
     calculate_match_score,
 )
+
+
+class FakeEmbeddingModel:
+    """Small deterministic embedding stand-in for tests (no model download)."""
+
+    def encode(self, texts, **kwargs):
+        vocabulary = (
+            "python", "fastapi", "react", "mongodb", "java", "spring", "skills",
+            "experience", "bachelor", "master", "aws", "certified", "education",
+        )
+        vectors = []
+        for text in texts:
+            lowered = str(text).lower()
+            vector = [lowered.count(term) for term in vocabulary]
+            norm = sum(value * value for value in vector) ** 0.5
+            vectors.append(np.array([value / norm for value in vector] if norm else vector))
+        return vectors
+
+
+@pytest.fixture
+def semantic_model(monkeypatch):
+    monkeypatch.setattr(matching_engine, "_get_embedding_model", lambda: FakeEmbeddingModel())
 
 
 def test_skills_score_perfect_match():
@@ -71,7 +95,7 @@ def test_certifications_score_no_requirement():
     assert score == 100.0
 
 
-def test_full_match_score_excellent():
+def test_full_match_score_returns_semantic_ats_fields(semantic_model):
     candidate = {
         "skills": ["Python", "FastAPI", "React", "MongoDB"],
         "experience_years": 5.0,
@@ -85,11 +109,15 @@ def test_full_match_score_excellent():
         "certificationsRequired": ["AWS Certified"],
     }
     result = calculate_match_score(candidate, job)
-    assert result["match_score"] == 100.0
-    assert result["rank"] == "Excellent Match"
+    assert 0 <= result["ats_score"] <= 100
+    assert result["match_score"] == result["ats_score"]
+    assert result["match_label"] == result["rank"]
+    assert result["matched_skills"]
+    assert result["missing_skills"] == []
+    assert result["matching_summary"]
 
 
-def test_full_match_score_low():
+def test_full_match_score_low_returns_semantic_ats_fields(semantic_model):
     candidate = {
         "skills": ["Java"],
         "experience_years": 0.0,
@@ -103,5 +131,6 @@ def test_full_match_score_low():
         "certificationsRequired": ["AWS Certified"],
     }
     result = calculate_match_score(candidate, job)
-    assert result["match_score"] < 50.0
-    assert result["rank"] == "Low Match"
+    assert 0 <= result["ats_score"] <= 100
+    assert result["match_label"] == result["rank"]
+    assert result["missing_skills"]

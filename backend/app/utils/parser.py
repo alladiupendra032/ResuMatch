@@ -309,6 +309,7 @@ def parse_resume(file_bytes: bytes, filename: str) -> dict:
     projects = extract_projects(text)
 
     return {
+        "resume_text": text.strip(),
         "name": name,
         "email": email,
         "phone": phone,

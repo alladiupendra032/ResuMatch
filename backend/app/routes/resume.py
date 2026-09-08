@@ -67,6 +67,7 @@ async def upload_resume(
         "certifications": parsed.get("certifications", []),
         "projects": parsed.get("projects", []),
         "education_level": parsed.get("education_level", 0),
+        "resumeText": parsed.get("resume_text", ""),
         "resumeUrl": resume_url,
         "updated_at": datetime.utcnow(),
     }

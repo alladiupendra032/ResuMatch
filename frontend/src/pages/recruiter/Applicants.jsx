@@ -130,10 +130,12 @@ export default function RecruiterApplicants() {
           {applications.map(app => {
             const isExpanded = expandedId === app.id;
             const isUpdating = updatingId === app.id;
+            const atsScore = app.ats_score ?? app.matchScore;
+            const matchLabel = app.match_label ?? app.matchRank;
             return (
               <div key={app.id} className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
                 {/* Score bar accent */}
-                <div style={{ height: '3px', background: `linear-gradient(90deg, ${rankColor(app.matchRank)}, transparent)` }} />
+                <div style={{ height: '3px', background: `linear-gradient(90deg, ${rankColor(matchLabel)}, transparent)` }} />
 
                 <div style={{ padding: '18px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
@@ -143,9 +145,9 @@ export default function RecruiterApplicants() {
                         <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
                           {app.candidateName || 'Candidate'}
                         </h3>
-                        {app.matchScore != null && (
-                          <span className={`badge ${getMatchClass(app.matchRank)}`} style={{ fontSize: '12px' }}>
-                            {app.matchScore.toFixed(0)}% · {app.matchRank}
+                        {atsScore != null && (
+                          <span className={`badge ${getMatchClass(matchLabel)}`} style={{ fontSize: '12px' }}>
+                            {Number(atsScore).toFixed(0)}% · {matchLabel}
                           </span>
                         )}
                       </div>
@@ -199,25 +201,30 @@ export default function RecruiterApplicants() {
                   {isExpanded && (
                     <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--glass-border)', animation: 'fadeIn 0.2s ease-out' }}>
                       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                        {[
-                          { label: '🎯 Skills', value: app.skillScore },
-                          { label: '💼 Experience', value: app.experienceScore },
-                          { label: '🎓 Education', value: app.educationScore },
-                          { label: '📜 Certs', value: app.certificationScore },
-                        ].map(({ label, value }) => value != null && (
-                          <div key={label} style={{ flex: 1, minWidth: '90px', padding: '10px', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)', textAlign: 'center' }}>
-                            <div className="text-xs text-muted mb-1">{label}</div>
-                            <div className="font-bold" style={{ fontSize: '18px', color: value >= 70 ? '#10b981' : value >= 50 ? '#f59e0b' : '#ef4444' }}>
-                              {value.toFixed(0)}%
-                            </div>
+                        <div style={{ flex: 1, minWidth: '140px', padding: '10px', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)', textAlign: 'center' }}>
+                          <div className="text-xs text-muted mb-1">AI ATS Match Score</div>
+                          <div className="font-bold" style={{ fontSize: '18px', color: atsScore >= 70 ? '#10b981' : atsScore >= 50 ? '#f59e0b' : '#ef4444' }}>
+                            {atsScore != null ? `${Number(atsScore).toFixed(1)}%` : '—'}
                           </div>
-                        ))}
+                          <div className="text-xs text-muted">{matchLabel || '—'}</div>
+                        </div>
                       </div>
+                      {app.matching_summary && (
+                        <div className="text-sm text-muted" style={{ marginBottom: '10px' }}>{app.matching_summary}</div>
+                      )}
                       {app.matchedSkills?.length > 0 && (
                         <div>
                           <span className="text-xs text-muted">Matched skills: </span>
                           {app.matchedSkills.map(s => (
                             <span key={s} className="badge badge-green" style={{ marginLeft: '4px', fontSize: '10px' }}>{s}</span>
+                          ))}
+                        </div>
+                      )}
+                      {app.missing_skills?.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          <span className="text-xs text-muted">Missing skills: </span>
+                          {app.missing_skills.map(s => (
+                            <span key={s} className="badge badge-red" style={{ marginLeft: '4px', fontSize: '10px' }}>{s}</span>
                           ))}
                         </div>
                       )}

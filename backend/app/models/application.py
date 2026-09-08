@@ -17,6 +17,11 @@ class ApplicationResponse(BaseModel):
     jobId: str
     matchScore: Optional[float] = None
     matchRank: Optional[str] = None
+    ats_score: Optional[float] = None
+    match_label: Optional[str] = None
+    matched_skills: Optional[list] = None
+    missing_skills: Optional[list] = None
+    matching_summary: Optional[str] = None
     status: str
     created_at: datetime
 

@@ -164,6 +164,7 @@ async def seed_database(secret: str = Query(...)):
             "skills": c["skills"], "experience_years": float(c["exp"]),
             "education": [c["edu"]], "education_level": c["edu_level"],
             "certifications": c["certs"], "projects": [],
+            "resumeText": f"{c['name']} has {c['exp']} years of experience. Skills: {', '.join(c['skills'])}. Education: {c['edu']}. Certifications: {', '.join(c['certs'])}.",
             "resumeUrl": None,
             "created_at": now_minus(days=random.randint(5,20)), "updated_at": datetime.utcnow()})
         candidate_ids.append((cand_oid, user_oid))
@@ -177,8 +178,11 @@ async def seed_database(secret: str = Query(...)):
         job_oid = job_ids[job_idx]
 
         cand_for_match = {"skills": c["skills"], "experience_years": float(c["exp"]),
-                          "education": [c["edu"]], "certifications": c["certs"]}
+                          "education": [c["edu"]], "certifications": c["certs"],
+                          "resumeText": f"{c['name']} has {c['exp']} years of experience. Skills: {', '.join(c['skills'])}. Education: {c['edu']}. Certifications: {', '.join(c['certs'])}."}
         job_for_match = {
+            "title": j["title"],
+            "description": f"We are looking for a talented {j['title']} to join our team.",
             "skillsRequired": j["skills"],
             "experienceRequired": j["exp"],
             "educationRequired": j["edu"],
@@ -193,10 +197,16 @@ async def seed_database(secret: str = Query(...)):
             "candidateSkills": c["skills"], "candidateExperience": c["exp"],
             "jobId": str(job_oid), "jobTitle": j["title"],
             "jobDepartment": j["dept"], "jobLocation": j["loc"],
+            "ats_score": match["ats_score"], "match_label": match["match_label"],
+            "matched_skills": match["matched_skills"], "missing_skills": match["missing_skills"],
+            "matching_summary": match["matching_summary"],
+            "atsScore": match["ats_score"], "matchLabel": match["match_label"],
             "matchScore": match["match_score"], "matchRank": match["rank"],
             "skillScore": match["skill_score"], "experienceScore": match["experience_score"],
             "educationScore": match["education_score"], "certificationScore": match["certification_score"],
             "matchedSkills": match.get("matched_skills", []),
+            "missingSkills": match.get("missing_skills", []),
+            "matchingSummary": match.get("matching_summary", ""),
             "status": status,
             "created_at": now_minus(days=random.randint(1,10), hours=random.randint(0,12)),
             "updated_at": datetime.utcnow(),

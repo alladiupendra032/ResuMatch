@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from bson import ObjectId
+from starlette.concurrency import run_in_threadpool
 from app.database import applications_collection, candidates_collection, jobs_collection
 from app.models.application import ApplicationCreate, ApplicationStatusUpdate
 from app.utils.dependencies import get_current_user, require_recruiter, require_hiring_manager
@@ -53,7 +54,7 @@ async def apply_for_job(
         raise HTTPException(status_code=409, detail="You have already applied for this job.")
 
     # ── Run AI Matching Engine ─────────────────────────────────────────────────
-    match_result = calculate_match_score(candidate, job)
+    match_result = await run_in_threadpool(calculate_match_score, candidate, job)
 
     app_doc = {
         "candidateId": str(candidate["_id"]),
@@ -66,6 +67,14 @@ async def apply_for_job(
         "jobTitle": job.get("title", ""),
         "jobDepartment": job.get("department", ""),
         "jobLocation": job.get("location", ""),
+        "ats_score": match_result["ats_score"],
+        "match_label": match_result["match_label"],
+        "matched_skills": match_result["matched_skills"],
+        "missing_skills": match_result["missing_skills"],
+        "matching_summary": match_result["matching_summary"],
+        # Existing camelCase fields remain populated for current clients.
+        "atsScore": match_result["ats_score"],
+        "matchLabel": match_result["match_label"],
         "matchScore": match_result["match_score"],
         "matchRank": match_result["rank"],
         "skillScore": match_result["skill_score"],
@@ -73,6 +82,8 @@ async def apply_for_job(
         "educationScore": match_result["education_score"],
         "certificationScore": match_result["certification_score"],
         "matchedSkills": match_result["matched_skills"],
+        "missingSkills": match_result["missing_skills"],
+        "matchingSummary": match_result["matching_summary"],
         "status": "applied",
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),

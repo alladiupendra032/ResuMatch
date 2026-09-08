@@ -130,6 +130,7 @@ export default function HMApplications() {
                 <tbody>
                   {filtered.map(app => {
                     const sc = STATUS_COLORS[app.status] || { bg: '#6b728022', text: '#6b7280' };
+                    const atsScore = app.ats_score ?? app.matchScore;
                     return (
                       <tr key={app.id}
                         onClick={() => setSelected(selected?.id === app.id ? null : app)}
@@ -145,8 +146,8 @@ export default function HMApplications() {
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{app.jobDepartment || ''}</div>
                         </td>
                         <td style={{ padding: '14px 16px' }}>
-                          <span className={`badge ${getScoreClass(app.matchScore)}`}>
-                            {(app.matchScore || 0).toFixed(1)}%
+                          <span className={`badge ${getScoreClass(atsScore)}`}>
+                            {(Number(atsScore) || 0).toFixed(1)}%
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px' }}>
@@ -196,23 +197,16 @@ export default function HMApplications() {
             {/* Match Score Breakdown */}
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Match Breakdown</div>
-              {[
-                { label: 'Overall',       value: selected.matchScore,         color: '#8b5cf6', weight: '—' },
-                { label: 'Skills (50%)',  value: selected.skillScore,         color: '#3b82f6', weight: '50%' },
-                { label: 'Experience (25%)', value: selected.experienceScore, color: '#10b981', weight: '25%' },
-                { label: 'Education (15%)', value: selected.educationScore,   color: '#f59e0b', weight: '15%' },
-                { label: 'Certs (10%)',   value: selected.certificationScore, color: '#ec4899', weight: '10%' },
-              ].map(({ label, value, color }) => (
-                <div key={label} style={{ marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '3px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-                    <span style={{ color, fontWeight: '600' }}>{(value || 0).toFixed(0)}%</span>
-                  </div>
-                  <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.min(value || 0, 100)}%`, background: color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
-                  </div>
+              <div style={{ padding: '12px', background: 'rgba(139,92,246,0.08)', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>AI ATS Match Score</div>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>
+                  {Number(selected.ats_score ?? selected.matchScore ?? 0).toFixed(1)}%
                 </div>
-              ))}
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selected.match_label ?? selected.matchRank ?? '—'}</div>
+              </div>
+              {selected.matching_summary && (
+                <div className="text-sm text-muted" style={{ marginTop: '10px' }}>{selected.matching_summary}</div>
+              )}
             </div>
 
             {/* Matched Skills */}
@@ -222,6 +216,16 @@ export default function HMApplications() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {selected.matchedSkills.map(s => (
                     <span key={s} style={{ padding: '3px 8px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', fontSize: '11px', color: '#10b981' }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selected.missing_skills?.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Missing Skills</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {selected.missing_skills.map(s => (
+                    <span key={s} style={{ padding: '3px 8px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', fontSize: '11px', color: '#ef4444' }}>{s}</span>
                   ))}
                 </div>
               </div>
